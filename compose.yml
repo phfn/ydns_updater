@@ -1,0 +1,17 @@
+version: '3.8'
+
+services:
+  ydns-updater:
+    build: .
+    container_name: ydns-updater
+    restart: unless-stopped
+    environment:
+      - YDNS_HOST_VAR=${YDNS_HOST_VAR}
+      - YDNS_USER_VAR=${YDNS_USER_VAR}
+      - YDNS_PASSWORD_VAR=${YDNS_PASSWORD_VAR}
+      - FORCE_IP_VAR=${FORCE_IP_VAR}          # Optional, leave empty or comment out to auto-detect
+      - RECORD_ID_VAR=${RECORD_ID_VAR}       # Optional, leave empty or comment out
+      - UPDATE_INTERVAL_VAR=${UPDATE_INTERVAL_VAR} # Optional, defaults to 300 in script
+    # If you prefer using an .env file for credentials:
+    env_file:
+      - .env
