@@ -6,6 +6,10 @@ This project provides the necessary files to create a Docker container that auto
 
 This code is mainly written by AI. It seems to work, but you should review if you want to use it.
 
+## Not working
+
+IPv6 in Docker requires tinkering.
+
 ## Files
 
 * `update_ydns.sh`: The core shell script that interacts with the YDNS API.
