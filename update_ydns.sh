@@ -12,11 +12,10 @@ YDNS_PASSWORD="${YDNS_PASSWORD_VAR:?Error: YDNS_PASSWORD_VAR environment variabl
 # Optional: Override IP detection. Leave empty to auto-detect.
 # Update interval in seconds. Default: 300 seconds (5 minutes)
 UPDATE_INTERVAL="${UPDATE_INTERVAL_VAR:-300}"
-DEBUG=""
-
+YDNS_DEBUG="${YDNS_DEBUG:-""}"
 # --- Helper Functions ---
 debug() {
-	if [[ -n $DEBUG ]]; then
+	if [ -n "$YDNS_DEBUG" ]; then
 		echo "[$(date '+%Y-%m-%d %H:%M:%S')] $1"
 	fi
 }
