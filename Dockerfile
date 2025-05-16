@@ -1,14 +1,32 @@
-# Use a lightweight base image with curl and bash/sh
-FROM alpine/curl:latest
+# Use official Python Alpine image for small size
+FROM python:3-alpine
 
-# Set working directory
+# Install required system dependencies
+RUN apk add --no-cache curl
+
+# Install Python dependencies
+RUN pip install --no-cache-dir configargparse
+
+# Create app directory and non-root user
+RUN adduser -D ydnsuser
 WORKDIR /app
+COPY update_ydns.py /app/
 
-# Copy the update script into the container
-COPY update_ydns.sh .
+# Set ownership and switch to non-root user
+RUN chown ydnsuser:ydnsuser /app/update_ydns.py
+USER ydnsuser
 
-# Make the script executable
-RUN chmod +x update_ydns.sh
+# Set default environment variables
+ENV UPDATE_INTERVAL=300
 
-# Run the script when the container starts
-CMD ["./update_ydns.sh"]
+# Document expected environment variables
+ENV YDNS_HOST="" \
+    YDNS_USER="" \
+    YDNS_PASSWORD=""
+
+# Health check to verify script is running
+HEALTHCHECK --interval=60s --timeout=10s --start-period=30s \
+    CMD pgrep -f update_ydns.py || exit 1
+
+# Run the updater
+ENTRYPOINT ["python3", "update_ydns.py"]

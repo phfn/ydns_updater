@@ -5,26 +5,18 @@ This project provides the necessary files to create a Docker container that auto
 
 ## Usage Standalone
 
-Make sure `curl` is installed.
+Make sure `curl` and `python` (3) is installed.
 
-Set enviroment variables
-```sh
-export YDNS_HOST="" # Your full YDNS hostname (e.g., `mycomputer.ydns.io`).
-export YDNS_USER="" # Your YDNS API username or account email.
-export YDNS_PASSWORD="" # Your YDNS API password or account password.
-export UPDATE_INTERVAL="" # Optional: How often (in seconds) the script should attempt to update the IP. Defaults to 300 (5 minutes).
-export YDNS_DEBUG="" # Optional: Set to any value to enable more output
-```
-Or [use .env file](https://stackoverflow.com/questions/43267413/how-to-set-environment-variables-from-env-file):
-```sh
-set -a # automatically export all variables
-source .env
-set +a
-```
 Run script:
 ```sh
-./update_ydns.sh
+python update_ydns.py \
+--host your_host.ydns.eu \   # Your full YDNS hostname (e.g., `your_host.ydns.eu`).
+--user your_username \       # Your YDNS API username or account email.
+--password your_api_secret \ # Your YDNS API password or account password.
+--update-interval 300 \      # (Optional): How often (in seconds) the script should attempt to update the IP. Defaults to 300 (5 minutes) if not set or if left empty in the `.env` file.
+--debug \                    # (Optional): Verbose output. Defaults to False
 ```
+Alternativly you can use the same environment variables as descripe below in docker usage.
 
 
 ## Usage Docker
@@ -37,10 +29,11 @@ cp .env.example .env
 ```
 Edit the `.env` file and fill in your YDNS details:
 
-* `YDNS_HOST`: Your full YDNS hostname (e.g., `mycomputer.ydns.io`).
+* `YDNS_HOST`: Your full YDNS hostname (e.g., `your_host.ydns.eu`).
 * `YDNS_USER`: Your YDNS API username or account email.
 * `YDNS_PASSWORD`: Your YDNS API password or account password.
 * `UPDATE_INTERVAL` (Optional): How often (in seconds) the script should attempt to update the IP. Defaults to 300 (5 minutes) if not set or if left empty in the `.env` file.
+* `YDNS_DEBUG` (Optional): Verbose output. Defaults to False
 
 ### Start the container:
 
@@ -66,3 +59,4 @@ Uncomment the ending lines in compose.yml to use ipv6, and therefore also update
 #   ip6net:
 #     external: true
 
+ ```
