@@ -25,64 +25,62 @@ log() {
 }
 
 # --- Main Logic ---
-CURRENT_IP=""
 RETURN=""
 
 get_ip() {
 	local ip_version=$1
 	debug "Attempting to retrieve current public IPv4 address from ${YDNS_IP_RETRIEVAL_URL}..."
-	IP_RESPONSE=$(curl -${ip_version} -s "${YDNS_IP_RETRIEVAL_URL}")
-	if [ -z "${IP_RESPONSE}" ]; then
+	local ip_response=$(curl -${ip_version} -s "${YDNS_IP_RETRIEVAL_URL}")
+	if [ -z "${ip_response}" ]; then
 		log "Error (IPv${ip_version}): Failed to retrieve IP address. Response was empty."
 		return 1
 	fi
 	# Basic check if the response is an IP (simplistic)
-	if ! echo "${IP_RESPONSE}" | grep -E -q '^[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}$|^[0-9a-fA-F:]+$'; then
-		log "Error (IPv${ip_version}): Retrieved IP address '${IP_RESPONSE}' does not look valid."
+	if ! echo "${ip_response}" | grep -E -q '^[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}$|^[0-9a-fA-F:]+$'; then
+		log "Error (IPv${ip_version}): Retrieved IP address '${ip_response}' does not look valid."
 		return 1
 	fi
-	CURRENT_IP="${IP_RESPONSE}"
-	debug "Current public IPv4 address detected: ${CURRENT_IP}"
-	RETURN=$CURRENT_IP
+	debug "Current public IPv4 address detected: ${ip_response}"
+	RETURN=$ip_response
 }
 
 update_dns() {
 	local ip=$1
 
     # 2. Construct Update URL
-    PARAMS="host=${YDNS_HOST}"
-    if [ -n "${CURRENT_IP}" ]; then # Always true at this point, but good practice
-        PARAMS="${PARAMS}&ip=${CURRENT_IP}"
+    local params="host=${YDNS_HOST}"
+    if [ -n "${ip}" ]; then # Always true at this point, but good practice
+        params="${params}&ip=${ip}"
     fi
 
-    FULL_UPDATE_URL="${YDNS_UPDATE_URL}?${PARAMS}"
-    debug "Update URL: ${FULL_UPDATE_URL}" # Be cautious logging URLs with sensitive data if logs are public
+    local full_update_url="${YDNS_UPDATE_URL}?${params}"
+    debug "Update URL: ${full_update_url}" # Be cautious logging URLs with sensitive data if logs are public
 
     # 3. Perform Update
     debug "Sending update request to YDNS..."
-    HTTP_RESPONSE_CODE=$(curl -s -w "%{http_code}" -o /tmp/ydns_update_response.txt --user "${YDNS_USER}:${YDNS_PASSWORD}" "${FULL_UPDATE_URL}")
-    RESPONSE_BODY=$(cat /tmp/ydns_update_response.txt)
+    local http_response_code=$(curl -s -w "%{http_code}" -o /tmp/ydns_update_response.txt --user "${YDNS_USER}:${YDNS_PASSWORD}" "${full_update_url}")
+    local response_body=$(cat /tmp/ydns_update_response.txt)
     rm -f /tmp/ydns_update_response.txt
 
-    debug "YDNS API Response Code: ${HTTP_RESPONSE_CODE}"
-    debug "YDNS API Response Body: ${RESPONSE_BODY}"
+    debug "YDNS API Response Code: ${http_response_code}"
+    debug "YDNS API Response Body: ${response_body}"
 
     # 4. Check Response
-    if [ "${HTTP_RESPONSE_CODE}" -eq 200 ]; then
-		if [[ "${RESPONSE_BODY}" =~ "good"  ]]; then
-			log "Success. Updated.   ${CURRENT_IP}"
+    if [ "${http_response_code}" -eq 200 ]; then
+		if [[ "${response_body}" =~ "good"  ]]; then
+			log "Success. Updated.   ${ip}"
 			return 0
 		else
-			log "Success. No update. ${CURRENT_IP}"
+			log "Success. No update. ${ip}"
 		fi
-    elif [ "${HTTP_RESPONSE_CODE}" -eq 400 ]; then
+    elif [ "${http_response_code}" -eq 400 ]; then
         log "Error: Bad request (400). Invalid input parameters. Check your YDNS_HOST, IP, or RECORD_ID."
-    elif [ "${HTTP_RESPONSE_CODE}" -eq 401 ]; then
+    elif [ "${http_response_code}" -eq 401 ]; then
         log "Error: Authentication failed (401). Check your YDNS_USER and YDNS_PASSWORD."
-    elif [ "${HTTP_RESPONSE_CODE}" -eq 404 ]; then
+    elif [ "${http_response_code}" -eq 404 ]; then
         log "Error: Host not found (404). The host ${YDNS_HOST} may not exist in your YDNS account."
     else
-        log "Error: YDNS update failed. HTTP Status: ${HTTP_RESPONSE_CODE}, Body: ${RESPONSE_BODY}"
+        log "Error: YDNS update failed. HTTP Status: ${http_response_code}, Body: ${response_body}"
     fi
     return 1
 }
