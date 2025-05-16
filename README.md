@@ -9,10 +9,10 @@ Make sure `curl` is installed.
 
 Set enviroment variables
 ```sh
-export YDNS_HOST_VAR="" # Your full YDNS hostname (e.g., `mycomputer.ydns.io`).
-export YDNS_USER_VAR="" # Your YDNS API username or account email.
-export YDNS_PASSWORD_VAR="" # Your YDNS API password or account password.
-export UPDATE_INTERVAL_VAR="" # Optional: How often (in seconds) the script should attempt to update the IP. Defaults to 300 (5 minutes).
+export YDNS_HOST="" # Your full YDNS hostname (e.g., `mycomputer.ydns.io`).
+export YDNS_USER="" # Your YDNS API username or account email.
+export YDNS_PASSWORD="" # Your YDNS API password or account password.
+export UPDATE_INTERVAL="" # Optional: How often (in seconds) the script should attempt to update the IP. Defaults to 300 (5 minutes).
 export YDNS_DEBUG="" # Optional: Set to any value to enable more output
 ```
 Or [use .env file](https://stackoverflow.com/questions/43267413/how-to-set-environment-variables-from-env-file):
@@ -37,10 +37,10 @@ cp .env.example .env
 ```
 Edit the `.env` file and fill in your YDNS details:
 
-* `YDNS_HOST_VAR`: Your full YDNS hostname (e.g., `mycomputer.ydns.io`).
-* `YDNS_USER_VAR`: Your YDNS API username or account email.
-* `YDNS_PASSWORD_VAR`: Your YDNS API password or account password.
-* `UPDATE_INTERVAL_VAR` (Optional): How often (in seconds) the script should attempt to update the IP. Defaults to 300 (5 minutes) if not set or if left empty in the `.env` file.
+* `YDNS_HOST`: Your full YDNS hostname (e.g., `mycomputer.ydns.io`).
+* `YDNS_USER`: Your YDNS API username or account email.
+* `YDNS_PASSWORD`: Your YDNS API password or account password.
+* `UPDATE_INTERVAL` (Optional): How often (in seconds) the script should attempt to update the IP. Defaults to 300 (5 minutes) if not set or if left empty in the `.env` file.
 
 ### Start the container:
 

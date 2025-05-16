@@ -6,12 +6,12 @@ YDNS_IP_RETRIEVAL_URL="https://ydns.io/api/v1/ip"
 
 # --- Configuration ---
 # Read from environment variables, with defaults if not set for some
-YDNS_HOST="${YDNS_HOST_VAR:?Error: YDNS_HOST_VAR environment variable not set.}"
-YDNS_USER="${YDNS_USER_VAR:?Error: YDNS_USER_VAR environment variable not set.}"
-YDNS_PASSWORD="${YDNS_PASSWORD_VAR:?Error: YDNS_PASSWORD_VAR environment variable not set.}"
+YDNS_HOST="${YDNS_HOST:?Error: YDNS_HOST environment variable not set.}"
+YDNS_USER="${YDNS_USER:?Error: YDNS_USER environment variable not set.}"
+YDNS_PASSWORD="${YDNS_PASSWORD:?Error: YDNS_PASSWORD environment variable not set.}"
 # Optional: Override IP detection. Leave empty to auto-detect.
 # Update interval in seconds. Default: 300 seconds (5 minutes)
-UPDATE_INTERVAL="${UPDATE_INTERVAL_VAR:-300}"
+UPDATE_INTERVAL="${UPDATE_INTERVAL:-300}"
 YDNS_DEBUG="${YDNS_DEBUG:-""}"
 # --- Helper Functions ---
 debug() {
@@ -28,38 +28,21 @@ log() {
 CURRENT_IP=""
 RETURN=""
 
-get_ip_v4() {
+get_ip() {
 	local ip_version=$1
 	debug "Attempting to retrieve current public IPv4 address from ${YDNS_IP_RETRIEVAL_URL}..."
 	IP_RESPONSE=$(curl -${ip_version} -s "${YDNS_IP_RETRIEVAL_URL}")
 	if [ -z "${IP_RESPONSE}" ]; then
-		log "Error: Failed to retrieve IP address. Response was empty."
+		log "Error (IPv${ip_version}): Failed to retrieve IP address. Response was empty."
 		return 1
 	fi
 	# Basic check if the response is an IP (simplistic)
 	if ! echo "${IP_RESPONSE}" | grep -E -q '^[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}$|^[0-9a-fA-F:]+$'; then
-		log "Error: Retrieved IP address '${IP_RESPONSE}' does not look valid."
+		log "Error (IPv${ip_version}): Retrieved IP address '${IP_RESPONSE}' does not look valid."
 		return 1
 	fi
 	CURRENT_IP="${IP_RESPONSE}"
 	debug "Current public IPv4 address detected: ${CURRENT_IP}"
-	RETURN=$CURRENT_IP
-}
-
-get_ip_v6() {
-	debug "Attempting to retrieve current public IPv6 address from ${YDNS_IP_RETRIEVAL_URL}..."
-	IP_RESPONSE=$(curl -6 -s "${YDNS_IP_RETRIEVAL_URL}")
-	if [ -z "${IP_RESPONSE}" ]; then
-		log "Error: Failed to retrieve IP address. Response was empty."
-		return 1
-	fi
-	# Basic check if the response is an IP (simplistic)
-	if ! echo "${IP_RESPONSE}" | grep -E -q '^[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}$|^[0-9a-fA-F:]+$'; then
-		log "Error: Retrieved IP address '${IP_RESPONSE}' does not look valid."
-		return 1
-	fi
-	CURRENT_IP="${IP_RESPONSE}"
-	debug "Current public IP address detected: ${CURRENT_IP}"
 	RETURN=$CURRENT_IP
 }
 
@@ -95,7 +78,7 @@ update_dns() {
     elif [ "${HTTP_RESPONSE_CODE}" -eq 400 ]; then
         log "Error: Bad request (400). Invalid input parameters. Check your YDNS_HOST, IP, or RECORD_ID."
     elif [ "${HTTP_RESPONSE_CODE}" -eq 401 ]; then
-        log "Error: Authentication failed (401). Check your YDNS_USER_VAR and YDNS_PASSWORD_VAR."
+        log "Error: Authentication failed (401). Check your YDNS_USER and YDNS_PASSWORD."
     elif [ "${HTTP_RESPONSE_CODE}" -eq 404 ]; then
         log "Error: Host not found (404). The host ${YDNS_HOST} may not exist in your YDNS account."
     else
@@ -108,19 +91,25 @@ update_dns() {
 log "YDNS Updater Script Started."
 log "Host to update: ${YDNS_HOST}"
 log "Update interval: ${UPDATE_INTERVAL} seconds"
+log "-------------------------------------------"
 
 main(){
 	while true; do
-		get_ip_v4 4
-		local ipv4=$RETURN
-		update_dns "${ipv4}"
+		get_ip 4
+		if [[ "${?}" -eq 0 ]]; then
+			local ipv4=$RETURN
+			update_dns "${ipv4}"
+		fi
 
-		get_ip_v6
-		local ipv6=$RETURN
-		update_dns "${ipv6}"
+		get_ip 6
+		if [[ "${?}" -eq 0 ]]; then
+			local ipv6=$RETURN
+			update_dns "${ipv6}"
+		fi
 
 		log "Sleeping for ${UPDATE_INTERVAL} seconds..."
 		sleep "${UPDATE_INTERVAL}"
+		log
 	done
 }
 main
