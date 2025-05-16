@@ -1,7 +1,6 @@
-version: '3.8'
-
 services:
   ydns-updater:
+    # image: ghcr.io/phfn/ydns_updater:main
     build: .
     container_name: ydns-updater
     restart: unless-stopped
